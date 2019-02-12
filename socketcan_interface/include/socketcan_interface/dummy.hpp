@@ -15,15 +15,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SOCKETCAN_INTERFACE__DUMMY_H_
-#define SOCKETCAN_INTERFACE__DUMMY_H_
+#ifndef SOCKETCAN_INTERFACE__DUMMY_HPP_
+#define SOCKETCAN_INTERFACE__DUMMY_HPP_
+
+#include <boost/algorithm/string.hpp>
 
 #include <unordered_map>
+#include <string>
+#include <utility>
+#include <memory>
 
-#include "interface.h"
-#include "dispatcher.h"
-#include "string.h"
-#include <boost/algorithm/string.hpp>
+#include "interface.hpp"
+#include "dispatcher.hpp"
+#include "string.hpp"
 
 namespace can
 {
@@ -49,7 +53,7 @@ class DummyInterface : public DriverInterface
     return false;
   }
 public:
-  DummyInterface(bool loopback) : loopback_(loopback) {}
+  explicit DummyInterface(bool loopback) : loopback_(loopback) {}
 
   bool add(const std::string &k, const Frame &v, bool multi)
   {
@@ -88,7 +92,8 @@ public:
   {
     return frame_dispatcher_.createListener(delegate);
   }
-  virtual FrameListenerConstSharedPtr createMsgListener(const Frame::Header&h, const FrameDelegate &delegate)
+  virtual FrameListenerConstSharedPtr createMsgListener(
+    const Frame::Header&h, const FrameDelegate &delegate)
   {
     return frame_dispatcher_.createListener(h, delegate);
   }
@@ -104,7 +109,7 @@ public:
     return state_;
   };
 
-  virtual void shutdown() {};
+  virtual void shutdown() {}
 
   virtual bool translateError(unsigned int internal_error, std::string & str)
   {
@@ -121,7 +126,7 @@ public:
     return loopback_;
   };
 
-  virtual void run() {};
+  virtual void run() {}
 
   bool init(const std::string &device, bool loopback)
   {
@@ -136,11 +141,10 @@ public:
   {
     return state_dispatcher_.createListener(delegate);
   };
-
 };
 
 typedef std::shared_ptr<DummyInterface> DummyInterfaceSharedPtr;
 
 }  // namespace can
 
-#endif  // SOCKETCAN_INTERFACE__DUMMY_H_
+#endif  // SOCKETCAN_INTERFACE__DUMMY_HPP_
