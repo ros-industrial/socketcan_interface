@@ -383,8 +383,8 @@ size_t ObjectStorage::map(uint16_t index, uint8_t sub_index, const ReadDelegate 
 ObjectStorage::ObjectStorage(ObjectDictConstSharedPtr dict, uint8_t node_id, ReadDelegate read_delegate, WriteDelegate write_delegate)
 :read_delegate_(read_delegate), write_delegate_(write_delegate), dict_(dict), node_id_(node_id){
     assert(dict_);
-    assert(!read_delegate_.empty());
-    assert(!write_delegate_.empty());
+    assert(read_delegate_);
+    assert(write_delegate_);
 }
 
 void ObjectStorage::init_nolock(const ObjectDict::Key &key, const ObjectDict::EntryConstSharedPtr &entry){

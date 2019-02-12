@@ -6,7 +6,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include <socketcan_interface/FastDelegate.h>
 #include <boost/thread/mutex.hpp>
 #include <functional>
 #include <typeinfo>
@@ -276,8 +275,8 @@ public:
 
 class ObjectStorage{
 public:
-    typedef fastdelegate::FastDelegate2<const ObjectDict::Entry&, String &> ReadDelegate;
-    typedef fastdelegate::FastDelegate2<const ObjectDict::Entry&, const String &> WriteDelegate;
+    typedef std::function<void(const ObjectDict::Entry&, String &)> ReadDelegate;
+    typedef std::function<void(const ObjectDict::Entry&, const String &)> WriteDelegate;
     typedef std::shared_ptr<ObjectStorage> ObjectStorageSharedPtr;
 
 protected:
@@ -313,15 +312,15 @@ protected:
 
         template<typename T> Data(const ObjectDict::Key &k, const ObjectDict::EntryConstSharedPtr &e, const T &val, const ReadDelegate &r, const WriteDelegate &w)
         : valid(false), read_delegate(r), write_delegate(w), type_guard(TypeGuard::create<T>()), entry(e), key(k){
-            assert(!r.empty());
-            assert(!w.empty());
+            assert(r);
+            assert(w);
             assert(e);
             allocate<T>() = val;
         }
         Data(const ObjectDict::Key &k, const ObjectDict::EntryConstSharedPtr &e, const TypeGuard &t, const ReadDelegate &r, const WriteDelegate &w)
         : valid(false), read_delegate(r), write_delegate(w), type_guard(t), entry(e), key(k){
-            assert(!r.empty());
-            assert(!w.empty());
+            assert(r);
+            assert(w);
             assert(e);
             assert(t.valid());
             buffer.resize(t.get_size());

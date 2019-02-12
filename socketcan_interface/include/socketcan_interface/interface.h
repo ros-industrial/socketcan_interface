@@ -3,10 +3,9 @@
 
 #include <array>
 #include <memory>
+#include <functional>
 
 #include <boost/system/error_code.hpp>
-
-#include "FastDelegate.h"
 
 namespace can{
 
@@ -106,7 +105,7 @@ public:
 
 class StateInterface{
 public:
-    typedef fastdelegate::FastDelegate1<const State&> StateDelegate;
+    typedef std::function<void(const State&)> StateDelegate;
     typedef Listener<const StateDelegate, const State&> StateListener;
     typedef StateListener::ListenerConstSharedPtr StateListenerConstSharedPtr;
 
@@ -118,6 +117,12 @@ public:
      */
     virtual StateListenerConstSharedPtr createStateListener(const StateDelegate &delegate) = 0;
 
+    template <class Inst, class F>
+    static StateDelegate createStateDelegate(Inst instance, F&& callable)
+    {
+      return std::bind(callable, instance, std::placeholders::_1);
+    }
+
     virtual ~StateInterface() {}
 };
 typedef std::shared_ptr<StateInterface> StateInterfaceSharedPtr;
@@ -125,7 +130,7 @@ typedef StateInterface::StateListenerConstSharedPtr StateListenerConstSharedPtr;
 
 class CommInterface{
 public:
-    typedef fastdelegate::FastDelegate1<const Frame&> FrameDelegate;
+    typedef std::function<void(const Frame&)> FrameDelegate;
     typedef Listener<const FrameDelegate, const Frame&> FrameListener;
     typedef FrameListener::ListenerConstSharedPtr FrameListenerConstSharedPtr;
 
@@ -153,6 +158,12 @@ public:
      * @return managed pointer to listener
      */
     virtual FrameListenerConstSharedPtr createMsgListener(const Frame::Header&, const FrameDelegate &delegate) = 0;
+
+    template <class Inst, class F>
+    static FrameDelegate createFrameDelegate(Inst instance, F&& callable)
+    {
+      return std::bind(callable, instance, std::placeholders::_1);
+    }
 
     virtual ~CommInterface() {}
 };

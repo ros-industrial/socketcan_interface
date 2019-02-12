@@ -1,7 +1,8 @@
 #ifndef H_CANOPEN_TIMER
 #define H_CANOPEN_TIMER
 
-#include <socketcan_interface/FastDelegate.h>
+#include <functional>
+
 #include <boost/asio.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/asio/high_resolution_timer.hpp>
@@ -10,8 +11,14 @@ namespace canopen{
 
 class Timer{
 public:
-    typedef fastdelegate::FastDelegate0<bool> TimerDelegate;
-    Timer():work(io), timer(io),thread(fastdelegate::FastDelegate0<size_t>(&io, &boost::asio::io_service::run)){
+    typedef std::function<bool(void)> TimerDelegate;
+    Timer() :
+      work(io),
+      timer(io),
+      thread(std::bind(
+        static_cast<size_t(boost::asio::io_service::*)(void)>(
+          &boost::asio::io_service::run), &io))
+    {
     }
     
     void stop(){
@@ -24,13 +31,13 @@ public:
         period = boost::chrono::duration_cast<boost::chrono::high_resolution_clock::duration>(dur);
         if(start_now){
             timer.expires_from_now(period);
-            timer.async_wait(fastdelegate::FastDelegate1<const boost::system::error_code&>(this, &Timer::handler));
+            timer.async_wait(std::bind(&Timer::handler, this, std::placeholders::_1));
         }
     }
     void restart(){
         boost::mutex::scoped_lock lock(mutex);
         timer.expires_from_now(period);
-        timer.async_wait(fastdelegate::FastDelegate1<const boost::system::error_code&>(this, &Timer::handler));
+        timer.async_wait(std::bind(&Timer::handler, this, std::placeholders::_1));
     }
     const  boost::chrono::high_resolution_clock::duration & getPeriod(){
         boost::mutex::scoped_lock lock(mutex);
@@ -55,7 +62,7 @@ private:
             boost::mutex::scoped_lock lock(mutex);
             if(delegate && delegate()){
                 timer.expires_at(timer.expires_at() + period);
-                timer.async_wait(fastdelegate::FastDelegate1<const boost::system::error_code&>(this, &Timer::handler));
+                timer.async_wait(std::bind(&Timer::handler, this, std::placeholders::_1));
             }
             
         }
