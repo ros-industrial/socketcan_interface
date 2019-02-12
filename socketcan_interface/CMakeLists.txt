@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(socketcan_interface)
 
-find_package(ament_cmake REQUIRED)
-find_package(pluginlib REQUIRED)
+find_package(ament_cmake_auto REQUIRED)
 find_package(Boost REQUIRED
   COMPONENTS
     chrono
@@ -11,6 +10,8 @@ find_package(Boost REQUIRED
 )
 find_package(Threads REQUIRED)
 
+ament_auto_find_build_dependencies()
+
 include_directories(
   include
   ${Boost_INCLUDE_DIRS}
@@ -18,22 +19,14 @@ include_directories(
 )
 
 # ${PROJECT_NAME}_string
-add_library(${PROJECT_NAME}_string SHARED
-  src/string.cpp
-)
+ament_auto_add_library(${PROJECT_NAME}_string src/string.cpp)
 
 target_link_libraries(${PROJECT_NAME}_string
   ${Boost_LIBRARIES}
 )
 
 # socketcan_dump
-add_executable(socketcan_dump
-  src/candump.cpp
-)
-
-ament_target_dependencies(socketcan_dump
-  pluginlib
-)
+ament_auto_add_executable(socketcan_dump src/candump.cpp)
 
 target_link_libraries(socketcan_dump
    ${PROJECT_NAME}_string
@@ -42,9 +35,7 @@ target_link_libraries(socketcan_dump
 )
 
 # socketcan_bcm
-add_executable(socketcan_bcm
-  src/canbcm.cpp
-)
+ament_auto_add_executable(socketcan_bcm src/canbcm.cpp)
 
 target_link_libraries(socketcan_bcm
    ${PROJECT_NAME}_string
@@ -52,21 +43,19 @@ target_link_libraries(socketcan_bcm
 )
 
 # ${PROJECT_NAME}_plugin
-add_library(${PROJECT_NAME}_plugin
-  src/${PROJECT_NAME}_plugin.cpp
-)
+ament_auto_add_library(${PROJECT_NAME}_plugin src/${PROJECT_NAME}_plugin.cpp)
 target_link_libraries(${PROJECT_NAME}_plugin
   ${Boost_LIBRARIES}
 )
 
-ament_target_dependencies(${PROJECT_NAME}_plugin
-  pluginlib
-)
-
 pluginlib_export_plugin_description_file(${PROJECT_NAME}_plugin socketcan_interface_plugin.xml)
 
+ament_export_dependencies(ament_cmake)
+ament_export_dependencies(rclcpp)
+ament_export_dependencies(class_loader)
+
 ament_export_include_directories(include)
-ament_export_interfaces(${PROJECT_NAME}_plugin HAS_LIBRARY_TARGET)
+ament_export_libraries(${PROJECT_NAME}_plugin)
 
 install(
   TARGETS
@@ -88,16 +77,12 @@ install(
 
 if(BUILD_TESTING)
 
-  find_package(ament_cmake_cppcheck REQUIRED)
-  find_package(ament_cmake_cpplint REQUIRED)
-  find_package(ament_cmake_lint_cmake REQUIRED)
-  find_package(ament_cmake_uncrustify REQUIRED)
-  ament_cppcheck()
-  ament_cpplint()
-  ament_lint_cmake()
-  ament_uncrustify()
+  find_package(ament_lint_auto REQUIRED)
+
+  ament_lint_auto_find_test_dependencies()
 
   find_package(ament_cmake_gtest REQUIRED)
+
   ament_add_gtest(${PROJECT_NAME}-test_dummy_interface
     test/test_dummy_interface.cpp
   )
@@ -120,3 +105,5 @@ if(BUILD_TESTING)
   )
 
 endif()
+
+ament_package()
