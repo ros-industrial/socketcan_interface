@@ -29,17 +29,17 @@ target_link_libraries(${PROJECT_NAME}_string
 ament_auto_add_executable(socketcan_dump src/candump.cpp)
 
 target_link_libraries(socketcan_dump
-   ${PROJECT_NAME}_string
-   ${Boost_LIBRARIES}
-   ${CMAKE_THREAD_LIBS_INIT}
+  ${PROJECT_NAME}_string
+  ${Boost_LIBRARIES}
+  ${CMAKE_THREAD_LIBS_INIT}
 )
 
 # socketcan_bcm
 ament_auto_add_executable(socketcan_bcm src/canbcm.cpp)
 
 target_link_libraries(socketcan_bcm
-   ${PROJECT_NAME}_string
-   ${Boost_LIBRARIES}
+  ${PROJECT_NAME}_string
+  ${Boost_LIBRARIES}
 )
 
 # ${PROJECT_NAME}_plugin
@@ -76,7 +76,6 @@ install(
 )
 
 if(BUILD_TESTING)
-
   find_package(ament_lint_auto REQUIRED)
 
   ament_lint_auto_find_test_dependencies()
@@ -103,7 +102,6 @@ if(BUILD_TESTING)
   target_link_libraries(${PROJECT_NAME}-test_filter
     ${PROJECT_NAME}_string
   )
-
 endif()
 
 ament_package()
