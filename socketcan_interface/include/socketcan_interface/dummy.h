@@ -15,8 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SOCKETCAN_INTERFACE_DUMMY_H
-#define SOCKETCAN_INTERFACE_DUMMY_H
+#ifndef SOCKETCAN_INTERFACE__DUMMY_H_
+#define SOCKETCAN_INTERFACE__DUMMY_H_
 
 #include <unordered_map>
 
@@ -138,9 +138,9 @@ public:
   };
 
 };
+
 typedef std::shared_ptr<DummyInterface> DummyInterfaceSharedPtr;
 
+}  // namespace can
 
-}
-
-#endif
+#endif  // SOCKETCAN_INTERFACE__DUMMY_H_

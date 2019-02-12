@@ -1,5 +1,5 @@
-#ifndef H_CAN_INTERFACE
-#define H_CAN_INTERFACE
+#ifndef SOCKETCAN_INTERFACE__INTERFACE_H_
+#define SOCKETCAN_INTERFACE__INTERFACE_H_
 
 #include <array>
 #include <memory>
@@ -287,5 +287,4 @@ struct _cout_wrapper
 
 #define LOG(log) { boost::mutex::scoped_lock _cout_lock(_cout_wrapper::get_cout_mutex()); std::cout << log << std::endl; }
 
-
-#endif
+#endif  // SOCKETCAN_INTERFACE__INTERFACE_H_
