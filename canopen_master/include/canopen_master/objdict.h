@@ -275,8 +275,30 @@ public:
 
 class ObjectStorage{
 public:
-    typedef std::function<void(const ObjectDict::Entry&, String &)> ReadDelegate;
-    typedef std::function<void(const ObjectDict::Entry&, const String &)> WriteDelegate;
+    class ReadDelegate :
+      public std::function<void(const ObjectDict::Entry&, String &)>
+    {
+      public:
+        template <class Instance, class Callable>
+        ReadDelegate(Instance i, Callable callable) :
+          std::function<void(const ObjectDict::Entry&, String &)>(
+              std::bind(callable, i, std::placeholders::_1, std::placeholders::_2))
+        {
+        }
+    };
+
+    class WriteDelegate :
+      public std::function<void(const ObjectDict::Entry&, String &)>
+    {
+      public:
+        template <class Instance, class Callable>
+        WriteDelegate(Instance i, Callable callable) :
+          std::function<void(const ObjectDict::Entry&, String &)>(
+              std::bind(callable, i, std::placeholders::_1, std::placeholders::_2))
+        {
+        }
+    };
+
     typedef std::shared_ptr<ObjectStorage> ObjectStorageSharedPtr;
 
 protected:

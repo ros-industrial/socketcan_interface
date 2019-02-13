@@ -50,8 +50,7 @@ public:
   FilteredFrameListener(CommInterfaceSharedPtr comm, const Callable &callable, const FilterVector &filters)
   : CommInterface::FrameListener(callable),
     filters_(filters),
-    listener_(comm->createMsgListener(
-      Callable(CommInterface::createFrameDelegate(this, &FilteredFrameListener::filter))))
+    listener_(comm->createMsgListener(Callable(this, &FilteredFrameListener::filter)))
   {}
 private:
   void filter(const Frame &frame) {

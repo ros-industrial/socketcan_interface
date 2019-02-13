@@ -2,6 +2,7 @@
 #define H_CANOPEN_TIMER
 
 #include <functional>
+#include <memory>
 
 #include <boost/asio.hpp>
 #include <boost/thread/thread.hpp>
@@ -11,13 +12,19 @@ namespace canopen{
 
 class Timer{
 public:
-    typedef std::function<bool(void)> TimerDelegate;
-    Timer() :
-      work(io),
-      timer(io),
-      thread(std::bind(
-        static_cast<size_t(boost::asio::io_service::*)(void)>(
-          &boost::asio::io_service::run), &io))
+    class TimerDelegate :
+      public std::function<bool(void)>
+    {
+      public:
+        template <class Instance, class Callable>
+        TimerDelegate(Instance i, Callable callable) :
+          std::function<bool(void)>(std::bind(callable, i))
+        {
+        }
+    };
+
+    Timer():work(io), timer(io),thread(std::bind(
+        static_cast<size_t(boost::asio::io_service::*)(void)>(&boost::asio::io_service::run), &io))
     {
     }
     
@@ -27,7 +34,7 @@ public:
     }
     template<typename T> void start(const TimerDelegate &del, const  T &dur, bool start_now = true){
         boost::mutex::scoped_lock lock(mutex);
-        delegate = del;
+        delegate.reset(new TimerDelegate(del));
         period = boost::chrono::duration_cast<boost::chrono::high_resolution_clock::duration>(dur);
         if(start_now){
             timer.expires_from_now(period);
@@ -56,17 +63,17 @@ private:
     boost::mutex mutex;
     boost::thread thread;
     
-    TimerDelegate delegate;
+    std::unique_ptr<TimerDelegate> delegate;
     void handler(const boost::system::error_code& ec){
         if(!ec){
             boost::mutex::scoped_lock lock(mutex);
-            if(delegate && delegate()){
+            if(delegate != nullptr && *delegate && (*delegate)()){
                 timer.expires_at(timer.expires_at() + period);
                 timer.async_wait(std::bind(&Timer::handler, this, std::placeholders::_1));
             }
             
         }
-    }    
+    }
 };
     
 }
