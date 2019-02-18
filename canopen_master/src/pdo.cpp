@@ -125,17 +125,16 @@ void PDOMapper::PDO::parse_and_set_mapping(const ObjectStorageSharedPtr &storage
             if(param.index < 0x1000){
                 // TODO: check DummyUsage
             }else{
-                std::unique_ptr<ObjectStorage::ReadDelegate> rd;
-                std::unique_ptr<ObjectStorage::WriteDelegate> wd;
+                ObjectStorage::ReadFunc rd;
+                ObjectStorage::WriteFunc wd;
 
-                if(read) rd = std::unique_ptr<ObjectStorage::ReadDelegate>(new ObjectStorage::ReadDelegate(
-                    b.get(), static_cast<void(Buffer::*)(const canopen::ObjectDict::Entry&, String&)>(&Buffer::read)));
+                if(read){
+                  rd = std::bind<void(Buffer::*)(const canopen::ObjectDict::Entry&, String&)>(&Buffer::read, b.get(), std::placeholders::_1, std::placeholders::_2);
+                }
                 if(read || write)
                 {
-                    wd = std::unique_ptr<ObjectStorage::WriteDelegate>(new ObjectStorage::WriteDelegate(
-                      b.get(), static_cast<void(Buffer::*)(const canopen::ObjectDict::Entry&, const String&)>(&Buffer::write))); // set writer for buffer setup or as write delegate
-
-                    size_t l = storage->map(param.index, param.sub_index, *rd, *wd);
+                    wd = std::bind<void(Buffer::*)(const canopen::ObjectDict::Entry&, const String&)>(&Buffer::write, b.get(), std::placeholders::_1, std::placeholders::_2);
+                    size_t l = storage->map(param.index, param.sub_index, rd, wd);
                     assert(l  == param.length/8);
                 }
             }
@@ -226,7 +225,7 @@ bool PDOMapper::RPDO::init(const ObjectStorageSharedPtr &storage, const uint16_t
 
     transmission_type = dict(com_index, SUB_COM_TRANSMISSION_TYPE).value().get<uint8_t>();
 
-    listener_ = interface_->createMsgListener(pdoid.header() ,can::CommInterface::FrameDelegate(this, &RPDO::handleFrame));
+    listener_ = interface_->createMsgListener(pdoid.header(), std::bind(&RPDO::handleFrame, this, std::placeholders::_1));
 
     return true;
 }

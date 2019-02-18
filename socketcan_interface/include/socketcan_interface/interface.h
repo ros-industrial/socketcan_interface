@@ -105,24 +105,24 @@ public:
 
 class StateInterface{
 public:
+    using StateFunc = std::function<void(const State&)>;
     class StateDelegate :
-      public std::function<void(const State&)>
+      public StateFunc
     {
       public:
         template <class Instance, class Callable>
         StateDelegate(Instance i, Callable callable) :
-          std::function<void(const State&)>(std::bind(callable, i, std::placeholders::_1))
+          StateFunc(std::bind(callable, i, std::placeholders::_1))
         {
         }
 
         template <class Callable>
         StateDelegate(Callable callable) :
-          std::function<void(const State&)>(callable)
+          StateFunc(callable)
         {
         }
     };
-
-    typedef Listener<const StateDelegate, const State&> StateListener;
+    typedef Listener<const StateFunc, const State&> StateListener;
     typedef StateListener::ListenerConstSharedPtr StateListenerConstSharedPtr;
 
     /**
@@ -131,7 +131,7 @@ public:
      * @param[in] delegate: delegate to be bound by the listener
      * @return managed pointer to listener
      */
-    virtual StateListenerConstSharedPtr createStateListener(const StateDelegate &delegate) = 0;
+    virtual StateListenerConstSharedPtr createStateListener(const StateFunc &delegate) = 0;
 
     virtual ~StateInterface() {}
 };
@@ -140,24 +140,25 @@ typedef StateInterface::StateListenerConstSharedPtr StateListenerConstSharedPtr;
 
 class CommInterface{
 public:
+    using FrameFunc = std::function<void(const Frame&)>;
     class FrameDelegate :
-      public std::function<void(const Frame&)>
+      public FrameFunc
     {
       public:
         template <class Instance, class Callable>
         FrameDelegate(Instance i, Callable callable) :
-          std::function<void(const Frame&)>(std::bind(callable, i, std::placeholders::_1))
+          FrameFunc(std::bind(callable, i, std::placeholders::_1))
         {
         }
 
         template <class Callable>
         FrameDelegate(Callable callable) :
-          std::function<void(const Frame&)>(callable)
+          FrameFunc(callable)
         {
         }
     };
 
-    typedef Listener<const FrameDelegate, const Frame&> FrameListener;
+    typedef Listener<const FrameFunc, const Frame&> FrameListener;
     typedef FrameListener::ListenerConstSharedPtr FrameListenerConstSharedPtr;
 
     /**
@@ -174,7 +175,7 @@ public:
      * @param[in] delegate: delegate to be bound by the listener
      * @return managed pointer to listener
      */
-    virtual FrameListenerConstSharedPtr createMsgListener(const FrameDelegate &delegate) = 0;
+    virtual FrameListenerConstSharedPtr createMsgListener(const FrameFunc &delegate) = 0;
 
     /**
      * acquire a listener for the specified delegate, that will get called for messages with demanded ID
@@ -183,7 +184,7 @@ public:
      * @param[in] delegate: delegate to be bound listener
      * @return managed pointer to listener
      */
-    virtual FrameListenerConstSharedPtr createMsgListener(const Frame::Header&, const FrameDelegate &delegate) = 0;
+    virtual FrameListenerConstSharedPtr createMsgListener(const Frame::Header&, const FrameFunc &delegate) = 0;
 
     virtual ~CommInterface() {}
 };
