@@ -55,20 +55,16 @@ namespace socketcan_bridge
   void SocketCANToTopic::setup()
     {
       // register handler for frames and state changes.
-      frame_listener_ = driver_->createMsgListener(
-              can::CommInterface::FrameDelegate(this, &SocketCANToTopic::frameCallback));
-
-      state_listener_ = driver_->createStateListener(
-              can::StateInterface::StateDelegate(this, &SocketCANToTopic::stateCallback));
+      frame_listener_ = driver_->createMsgListenerM(this, &SocketCANToTopic::frameCallback);
+      state_listener_ = driver_->createStateListenerM(this, &SocketCANToTopic::stateCallback);
     };
 
   void SocketCANToTopic::setup(const can::FilteredFrameListener::FilterVector &filters){
     frame_listener_.reset(new can::FilteredFrameListener(driver_,
-                                                         can::CommInterface::FrameDelegate(this, &SocketCANToTopic::frameCallback),
+                                                         std::bind(&SocketCANToTopic::frameCallback, this, std::placeholders::_1),
                                                          filters));
 
-    state_listener_ = driver_->createStateListener(
-            can::StateInterface::StateDelegate(this, &SocketCANToTopic::stateCallback));
+    state_listener_ = driver_->createStateListenerM(this, &SocketCANToTopic::stateCallback);
   }
 
   void SocketCANToTopic::setup(XmlRpc::XmlRpcValue filters) {

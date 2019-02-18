@@ -12,13 +12,14 @@ namespace canopen{
 
 class Timer{
 public:
+    using TimerFunc = std::function<bool(void)>;
     class TimerDelegate :
       public std::function<bool(void)>
     {
       public:
         template <class Instance, class Callable>
         TimerDelegate(Instance i, Callable callable) :
-          std::function<bool(void)>(std::bind(callable, i))
+          TimerFunc(std::bind(callable, i))
         {
         }
     };
@@ -32,9 +33,9 @@ public:
         boost::mutex::scoped_lock lock(mutex);
         timer.cancel();
     }
-    template<typename T> void start(const TimerDelegate &del, const  T &dur, bool start_now = true){
+    template<typename T> void start(const TimerFunc &del, const  T &dur, bool start_now = true){
         boost::mutex::scoped_lock lock(mutex);
-        delegate.reset(new TimerDelegate(del));
+        delegate = del;
         period = boost::chrono::duration_cast<boost::chrono::high_resolution_clock::duration>(dur);
         if(start_now){
             timer.expires_from_now(period);
@@ -63,11 +64,11 @@ private:
     boost::mutex mutex;
     boost::thread thread;
     
-    std::unique_ptr<TimerDelegate> delegate;
+    TimerFunc delegate;
     void handler(const boost::system::error_code& ec){
         if(!ec){
             boost::mutex::scoped_lock lock(mutex);
-            if(delegate != nullptr && *delegate && (*delegate)()){
+            if(delegate && delegate()){
                 timer.expires_at(timer.expires_at() + period);
                 timer.async_wait(std::bind(&Timer::handler, this, std::placeholders::_1));
             }
