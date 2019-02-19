@@ -12,6 +12,8 @@
 #include <vector>
 #include "exceptions.h"
 
+#include <socketcan_interface/helpers.hpp>
+
 namespace canopen{
 
 class TypeGuard{
@@ -276,30 +278,10 @@ public:
 class ObjectStorage{
 public:
     using ReadFunc = std::function<void(const ObjectDict::Entry&, String &)>;
-    class ReadDelegate :
-      public ReadFunc
-    {
-      public:
-        template <class Instance, class Callable>
-        ReadDelegate(Instance i, Callable callable) :
-          ReadFunc(
-              std::bind(callable, i, std::placeholders::_1, std::placeholders::_2))
-        {
-        }
-    };
+    using ReadDelegate = can::DelegateHelper<ReadFunc>;
 
     using WriteFunc = std::function<void(const ObjectDict::Entry&, String &)>;
-    class WriteDelegate :
-      public WriteFunc
-    {
-      public:
-        template <class Instance, class Callable>
-        WriteDelegate(Instance i, Callable callable) :
-          WriteFunc(
-              std::bind(callable, i, std::placeholders::_1, std::placeholders::_2))
-        {
-        }
-    };
+    using WriteDelegate = can::DelegateHelper<WriteFunc>;
 
     typedef std::shared_ptr<ObjectStorage> ObjectStorageSharedPtr;
 

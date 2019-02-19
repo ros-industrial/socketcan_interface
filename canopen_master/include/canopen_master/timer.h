@@ -8,21 +8,14 @@
 #include <boost/thread/thread.hpp>
 #include <boost/asio/high_resolution_timer.hpp>
 
+#include <socketcan_interface/helpers.hpp>
+
 namespace canopen{
 
 class Timer{
 public:
     using TimerFunc = std::function<bool(void)>;
-    class TimerDelegate :
-      public std::function<bool(void)>
-    {
-      public:
-        template <class Instance, class Callable>
-        TimerDelegate(Instance i, Callable callable) :
-          TimerFunc(std::bind(callable, i))
-        {
-        }
-    };
+    using TimerDelegate = DelegateHelper<TimerFunc>;
 
     Timer():work(io), timer(io),thread(std::bind(
         static_cast<size_t(boost::asio::io_service::*)(void)>(&boost::asio::io_service::run), &io))
