@@ -1,6 +1,7 @@
-sudo: required
-dist: trusty
-language: generic
+language: generic # optional, just removes the language badge
+
+services:
+  - docker
 
 cache:
   directories:
@@ -10,15 +11,11 @@ env:
   global:
     - CCACHE_DIR=$HOME/.ccache
   matrix:
-    - ROS_DISTRO="melodic" ROS_REPO=ros-shadow-fixed
-    - ROS_DISTRO="melodic" ROS_REPO=ros CATKIN_LINT=pedantic
-    - ROS_DISTRO="melodic" ABICHECK_URL='github:ros-industrial/ros_canopen#melodic'
+    - ROS_DISTRO="bouncy"
+    - ROS_DISTRO="crystal"
 
-matrix:
-  allow_failures:
-    - env: ROS_DISTRO="melodic" ABICHECK_URL='github:ros-industrial/ros_canopen#melodic'
 
 install:
-  - git clone --depth=1 https://github.com/ros-industrial/industrial_ci.git .ci_config
+  - git clone --depth=1 https://github.com/ipa-mdl/industrial_ci.git .ci_config -b colcon
 script:
   - .ci_config/travis.sh
