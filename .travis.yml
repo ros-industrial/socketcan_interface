@@ -12,7 +12,6 @@ env:
   matrix:
     - ROS_DISTRO="melodic" ROS_REPO=ros-shadow-fixed
     - ROS_DISTRO="melodic" ROS_REPO=ros CATKIN_LINT=pedantic
-    - ROS_DISTRO="melodic" ROSDEP_SKIP_KEYS=muparser EXPECT_EXIT_CODE=1
     - ROS_DISTRO="melodic" ABICHECK_URL='github:ros-industrial/ros_canopen#melodic'
 
 matrix:
@@ -21,5 +20,5 @@ matrix:
 
 install:
   - git clone --depth=1 https://github.com/ros-industrial/industrial_ci.git .ci_config
-script: 
+script:
   - .ci_config/travis.sh
