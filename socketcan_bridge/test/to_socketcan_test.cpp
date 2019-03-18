@@ -1,38 +1,27 @@
-/*
- * Copyright (c) 2016, Ivor Wanders
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *   * Redistributions of source code must retain the above copyright notice,
- *     this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of the copyright holder nor the names of its
- *     contributors may be used to endorse or promote products derived from
- *     this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-#include <socketcan_bridge/topic_to_socketcan.h>
-#include <socketcan_bridge/socketcan_to_topic.h>
+// Copyright (c) 2016-2019, Ivor Wanders, Mathias Lüdtke, AutonomouStuff
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <can_msgs/Frame.h>
-#include <socketcan_interface/socketcan.h>
-#include <socketcan_interface/dummy.h>
+#include <socketcan_bridge/topic_to_socketcan.hpp>
+#include <socketcan_bridge/socketcan_to_topic.hpp>
+
+#include <can_msgs/msg/frame.hpp>
+#include <socketcan_interface/socketcan.hpp>
+#include <socketcan_interface/dummy.hpp>
 
 #include <gtest/gtest.h>
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <list>
 
 class frameCollector
@@ -63,17 +52,18 @@ TEST(TopicToSocketCANTest, checkCorrectData)
   driver_->init("string_not_used", true);
 
   // register for messages on received_messages.
-  ros::Publisher publisher_ = nh.advertise<can_msgs::Frame>("sent_messages", 10);
+  ros::Publisher publisher_ = nh.advertise<can_msgs::msg::Frame>("sent_messages", 10);
 
   // create a frame collector.
   frameCollector frame_collector_;
 
   //  driver->createMsgListener(&frameCallback);
   can::FrameListenerConstSharedPtr frame_listener_ = driver_->createMsgListener(
-            can::CommInterface::FrameDelegate(&frame_collector_, &frameCollector::frameCallback));
+
+            std::bind(&frameCollector::frameCallback, &frame_collector_, std::placeholders::_1));
 
   // create a message
-  can_msgs::Frame msg;
+  can_msgs::msg::Frame msg;
   msg.is_extended = true;
   msg.is_rtr = false;
   msg.is_error = false;
@@ -94,7 +84,7 @@ TEST(TopicToSocketCANTest, checkCorrectData)
   ros::WallDuration(1.0).sleep();
   ros::spinOnce();
 
-  can_msgs::Frame received;
+  can_msgs::msg::Frame received;
   can::Frame f = frame_collector_.frames.back();
   socketcan_bridge::convertSocketCANToMessage(f, received);
 
@@ -124,17 +114,17 @@ TEST(TopicToSocketCANTest, checkInvalidFrameHandling)
   to_socketcan_bridge.setup();
 
   // register for messages on received_messages.
-  ros::Publisher publisher_ = nh.advertise<can_msgs::Frame>("sent_messages", 10);
+  ros::Publisher publisher_ = nh.advertise<can_msgs::msg::Frame>("sent_messages", 10);
 
   // create a frame collector.
   frameCollector frame_collector_;
 
   //  add callback to the dummy interface.
   can::FrameListenerConstSharedPtr frame_listener_ = driver_->createMsgListener(
-          can::CommInterface::FrameDelegate(&frame_collector_, &frameCollector::frameCallback));
+          std::bind(&frameCollector::frameCallback, &frame_collector_, std::placeholders::_1));
 
   // create a message
-  can_msgs::Frame msg;
+  can_msgs::msg::Frame msg;
   msg.is_extended = false;
   msg.id = (1<<11)+1;  // this is an illegal CAN packet... should not be sent.
   msg.header.frame_id = "0";  // "0" for no frame.

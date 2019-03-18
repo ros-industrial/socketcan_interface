@@ -13,30 +13,34 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <gtest/gtest.h>
+#ifndef SOCKETCAN_INTERFACE__HELPERS_HPP_
+#define SOCKETCAN_INTERFACE__HELPERS_HPP_
 
-#include <string>
+#include <functional>
 
-#include "socketcan_interface/string.hpp"
-
-TEST(StringTest, stringconversion)
+namespace can
 {
-  const std::string s1("123#1234567812345678");
-  can::Frame f1 = can::toframe(s1);
-  EXPECT_EQ(s1, can::tostring(f1, true));
 
-  const std::string s2("1337#1234567812345678");
-  can::Frame f2 = can::toframe(s2);
-  EXPECT_FALSE(f2.isValid());
-
-  const std::string s3("80001337#1234567812345678");
-  can::Frame f3 = can::toframe(s3);
-  EXPECT_EQ(s3, can::tostring(f3, true));
-}
-
-// Run all the tests that were declared with TEST()
-int main(int argc, char ** argv)
+template<typename T>
+class DelegateHelper : public T
 {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
+public:
+  template<typename Object, typename Instance, typename ... Args>
+  DelegateHelper(Object && o, typename T::result_type(Instance::* member)(Args ... args))
+  : T(
+      [&o, fn = std::mem_fn(member)](Args... args) -> typename T::result_type
+      {
+        return fn(o, args ...);
+      })
+  {
+  }
+
+  template<typename Callable>
+  explicit DelegateHelper(Callable && c)
+  : T(c)
+  {}
+};
+
+}  // namespace can
+
+#endif  // SOCKETCAN_INTERFACE__HELPERS_HPP_
